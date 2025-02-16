@@ -9,8 +9,6 @@ window.addEventListener("load", function() {
 
     class Player{
         constructor() {
-            this.gameWidth = canvas.width;
-            this.gameHeight = canvas.height;
             this.width = 125;
             this.height = 125;
             this.x = 300;
@@ -28,7 +26,7 @@ window.addEventListener("load", function() {
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height,
             this.x, this.y, this.width, this.height)
         }
-        update(deltaTime, buffs){
+        update(deltaTime){
             // sprite animation
             if (this.frameTimer > this.frameInterval) {
                 if (this.frameX >= this.maxFrame) this.frameX = 0;
@@ -115,8 +113,23 @@ window.addEventListener("load", function() {
             ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
         }
     }
-    class Buffs{
-
+    class Buff{
+        constructor(){
+            this.x = 2500;
+            this.y = Math.floor(Math.random() * 250) + (-1200);
+            this.width = 40;
+            this.height = 40;
+            this.markedForDeletion = false;
+        }
+        draw(){
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            this.x -= 2;
+        }
+        update(deltaTime){
+            if (player.x === this.x && player.y === this.y) {
+                this.markedForDeletion = true;
+            }
+        }
     }
 
     // Functionality to inputs
@@ -148,7 +161,7 @@ window.addEventListener("load", function() {
         }
         update(){
             // Check clicks array to determine if mouseup has been pressed yet
-            if (this.clicks.length == 0 && this.click === true) {
+            if (this.clicks.length == 1 && this.click === false) {
                 // Drag bird down and to the left
                 player.x--;
                 player.y++;
@@ -160,8 +173,8 @@ window.addEventListener("load", function() {
                     player.x = 225;
                 }
             } 
-            // Check if mouseup has been triggered yet and player is in boundaries
-            else if (this.clicks.length >= 1 && !this.temp) {
+            // Check if mouseup has been triggered 2nd time yet and player is in boundaries
+            else if (this.clicks.length > 1 && !this.temp) {
                 // Increase airTime and add weight to the player
                 player.x += playerAffectX;
                 player.y -= playerAffectY;
@@ -182,16 +195,35 @@ window.addEventListener("load", function() {
                 playerAffectX = 0;
             }
             // Jumping functionality
-            if (this.jump == true && this.onlyOnce == true && this.jumpCount < 5 && airTime > 500) {
+            if (this.jump == true && this.onlyOnce == true && this.jumpCount < 20 && airTime > 500) {
                 playerAffectY += 8;
                 this.onlyOnce = false;
                 this.jumpCount++;
+                console.log(buff.y);
             }
         }
     }
-    function handleBuffs(){
 
+    let buffs = [];
+    let buffTimer = 0;
+    let buffInterval = 0;
+    let randomBuffInterval = Math.random() * 1000 + 500;
+    function handleBuffs(deltaTime){
+        if (buffTimer > buffInterval + randomBuffInterval){
+            buffs.push(new Buff());
+            randomBuffInterval = Math.random() * 1000 + 500;
+            buffTimer = 0;
+        } else {
+            buffTimer += deltaTime;
+        }
+
+        buffs.forEach(buff => {
+            buff.draw(ctx);
+            buff.update(deltaTime);
+        })
+        buffs = buffs.filter(buff => !buff.markedForDeletion);
     }
+
     function displayStatusText(){
 
     }
@@ -199,13 +231,14 @@ window.addEventListener("load", function() {
     const input = new InputHandler();
     const player = new Player();
     const background = new Background();
+    const buff = new Buff();
     const layer1 = new Layer(backgroundLayer1, 0.2);
     const layer2 = new Layer(backgroundLayer2, 0.4);
     const layer3 = new Layer(backgroundLayer3, 0.6);
     const layer4 = new Layer(backgroundLayer4, 0.8);
     const layer5 = new Layer(backgroundLayer5, 1);
     const layer6 = new Layer(backgroundLayer6, 1);
-    const layer7 = new Layer(backgroundLayer7, 1);
+    const layer7 = new Layer(backgroundLayer7, 1.5);
 
     // Create an array of the layers to be iterated through
     const backgroundObjects = [layer1, layer2, layer3, layer4, layer5, layer6, layer7];
@@ -216,11 +249,12 @@ window.addEventListener("load", function() {
         const deltaTime = timeStamp - lastTime;
         lastTime = timeStamp;
         ctx.clearRect(0,0,canvas.width,canvas.height);
-        if (input.clicks.length >= 1 && !player.tooHigh() && !player.onGround()) {
+        if (input.clicks.length > 1 && !player.tooHigh() && !player.onGround()) {
             backgroundObjects.forEach(object => {
                 object.update();
                 object.draw();
             });
+            handleBuffs(deltaTime);
         } else {
             layer1.draw();
             layer2.draw();
@@ -230,8 +264,13 @@ window.addEventListener("load", function() {
             layer6.draw();
             layer7.draw();
         }
+        // backgroundObjects.forEach(object => {
+        //     object.update();
+        //     object.draw();
+        // });
         player.draw(ctx);
         player.update(deltaTime);
+
         input.update();
         requestAnimationFrame(animate);
     } animate(0);

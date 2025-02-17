@@ -6,6 +6,10 @@ window.addEventListener("load", function() {
     canvas.width = 1353;
     canvas.height = 575;
     let gameSpeed = 2;
+    let buffs = [];
+    let buffTimer = 0;
+    let buffInterval = 15;
+    let randomBuffInterval = Math.random() * 1000 + 500;
 
     class Player{
         constructor() {
@@ -26,7 +30,7 @@ window.addEventListener("load", function() {
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height,
             this.x, this.y, this.width, this.height)
         }
-        update(deltaTime){
+        update(deltaTime, buffs){
             // sprite animation
             if (this.frameTimer > this.frameInterval) {
                 if (this.frameX >= this.maxFrame) this.frameX = 0;
@@ -44,6 +48,16 @@ window.addEventListener("load", function() {
                 this.y = -1350;
                 this.frameX = 2;
             }
+            // Collision detection for jump buffs
+            buffs.forEach(buff => {
+                const dx = (buff.x + buff.width/2) - (this.x + this.width/2);
+                const dy =  (buff.y + buff.height/2) - (this.y + this.height/2);
+                const distance = Math.sqrt(dx * dx + dy * dy)
+                if (distance < buff.width/2 + this.width/2){
+                    buff.markedForDeletion = true;
+                    input.jumpCount--;
+                }
+            })
         }
         // detect if player is on starting platform
         onPlatform(){
@@ -116,17 +130,17 @@ window.addEventListener("load", function() {
     class Buff{
         constructor(){
             this.x = 2500;
-            this.y = Math.floor(Math.random() * 250) + (-1200);
+            this.y = Math.floor(Math.random() * (-800)) + (-400);
             this.width = 40;
             this.height = 40;
             this.markedForDeletion = false;
         }
         draw(){
             ctx.fillRect(this.x, this.y, this.width, this.height);
-            this.x -= 2;
+            this.x -= 0.5;
         }
         update(deltaTime){
-            if (player.x === this.x && player.y === this.y) {
+            if (this.x < 0 - this.width) {
                 this.markedForDeletion = true;
             }
         }
@@ -195,28 +209,24 @@ window.addEventListener("load", function() {
                 playerAffectX = 0;
             }
             // Jumping functionality
-            if (this.jump == true && this.onlyOnce == true && this.jumpCount < 20 && airTime > 500) {
-                playerAffectY += 8;
+            if (this.jump == true && this.onlyOnce == true && this.jumpCount < 15 && airTime > 500) {
+                playerAffectY += 9;
                 this.onlyOnce = false;
                 this.jumpCount++;
-                console.log(buff.y);
+                console.log(this.jumpCount);
             }
         }
     }
 
-    let buffs = [];
-    let buffTimer = 0;
-    let buffInterval = 0;
-    let randomBuffInterval = Math.random() * 1000 + 500;
+
     function handleBuffs(deltaTime){
-        if (buffTimer > buffInterval + randomBuffInterval){
+        if (buffTimer > buffInterval * randomBuffInterval){
             buffs.push(new Buff());
             randomBuffInterval = Math.random() * 1000 + 500;
             buffTimer = 0;
         } else {
             buffTimer += deltaTime;
         }
-
         buffs.forEach(buff => {
             buff.draw(ctx);
             buff.update(deltaTime);
@@ -253,8 +263,8 @@ window.addEventListener("load", function() {
             backgroundObjects.forEach(object => {
                 object.update();
                 object.draw();
-            });
-            handleBuffs(deltaTime);
+                handleBuffs(deltaTime);
+            });   
         } else {
             layer1.draw();
             layer2.draw();
@@ -264,13 +274,8 @@ window.addEventListener("load", function() {
             layer6.draw();
             layer7.draw();
         }
-        // backgroundObjects.forEach(object => {
-        //     object.update();
-        //     object.draw();
-        // });
         player.draw(ctx);
-        player.update(deltaTime);
-
+        player.update(deltaTime, buffs);
         input.update();
         requestAnimationFrame(animate);
     } animate(0);

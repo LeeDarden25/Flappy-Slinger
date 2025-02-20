@@ -5,6 +5,7 @@ window.addEventListener("load", function() {
     const ctx = canvas.getContext("2d");
     canvas.width = 1353;
     canvas.height = 575;
+    let score = 0;
     let gameSpeed = 2;
     let buffs = [];
     let buffTimer = 0;
@@ -55,7 +56,8 @@ window.addEventListener("load", function() {
                 const distance = Math.sqrt(dx * dx + dy * dy)
                 if (distance < buff.width/2 + this.width/2){
                     buff.markedForDeletion = true;
-                    input.jumpCount--;
+                    input.jumpCount += 2;
+                    score++;
                 }
             })
         }
@@ -129,17 +131,18 @@ window.addEventListener("load", function() {
     }
     class Buff{
         constructor(){
+            this.image = document.getElementById("buffImage");
             this.x = 2500;
             this.y = Math.floor(Math.random() * (-800)) + (-400);
-            this.width = 40;
-            this.height = 40;
+            this.width = 60;
+            this.height = 60;
             this.markedForDeletion = false;
         }
-        draw(){
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+        draw(context){
+            context.drawImage(this.image, 0, 0, 901, 878, this.x, this.y, this.width, this.height);
             this.x -= 0.5;
         }
-        update(deltaTime){
+        update(){
             if (this.x < 0 - this.width) {
                 this.markedForDeletion = true;
             }
@@ -157,7 +160,7 @@ window.addEventListener("load", function() {
             this.clicks = [];
             this.temp = false;
             this.onlyOnce = false;
-            this.jumpCount = 0;
+            this.jumpCount = 16;
             window.addEventListener("mousedown", e => {
                 this.click = true;
             });
@@ -182,9 +185,9 @@ window.addEventListener("load", function() {
                 // Halt bird animation at frame 2
                 player.frameX = 2;
                 // Stop dragging action at (225,275)
-                if (player.y > 275) {
-                    player.y = 275;
-                    player.x = 225;
+                if (player.y > 220) {
+                    player.y = 220;
+                    player.x = 280;
                 }
             } 
             // Check if mouseup has been triggered 2nd time yet and player is in boundaries
@@ -209,15 +212,13 @@ window.addEventListener("load", function() {
                 playerAffectX = 0;
             }
             // Jumping functionality
-            if (this.jump == true && this.onlyOnce == true && this.jumpCount < 15 && airTime > 500) {
+            if (this.jump == true && this.onlyOnce == true && this.jumpCount > 0 && airTime > 500) {
                 playerAffectY += 9;
                 this.onlyOnce = false;
-                this.jumpCount++;
-                console.log(this.jumpCount);
+                this.jumpCount--;
             }
         }
     }
-
 
     function handleBuffs(deltaTime){
         if (buffTimer > buffInterval * randomBuffInterval){
@@ -235,8 +236,10 @@ window.addEventListener("load", function() {
     }
 
     function displayStatusText(){
-
+        document.querySelector(".jump-count").innerHTML="JUMPS: " + input.jumpCount;
+        document.querySelector(".score-count").innerHTML="SCORE: " + score;
     }
+
     // declare classes
     const input = new InputHandler();
     const player = new Player();
@@ -277,6 +280,7 @@ window.addEventListener("load", function() {
         player.draw(ctx);
         player.update(deltaTime, buffs);
         input.update();
+        displayStatusText(ctx);
         requestAnimationFrame(animate);
     } animate(0);
 })

@@ -46,7 +46,6 @@ window.addEventListener("load", function() {
             }
             if (this.tooHigh()){
                 this.y = -1350;
-                this.frameX = 2;
                 hazard.draw();
                 hazard.x -= 10;
             }
@@ -137,13 +136,38 @@ window.addEventListener("load", function() {
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
         }
     }
+    class Wind {
+        constructor() {
+            this.image = document.getElementById("windImage");
+            this.width = 139;
+            this.height = 125;
+            this.x = 0;
+            this.y = 0;
+            this.frame = 0;
+            this.timeSinceLastFrame = 0;
+            this.frameInterval = 100;
+            this.markedForDeletion = false;
+        }
+        update(deltaTime){
+            this.timeSinceLastFrame += deltaTime;
+            if (this.timeSinceLastFrame > this.frameInterval){
+                this.frame++;
+                this.timeSinceLastFrame = 0;
+                if (this.frame > 5) this.markedForDeletion = true;
+            }
+        }
+        draw(){
+            ctx.drawImage(this.image, this.frame * this.width, 0, this.width, this.height,
+            this.x, this.y - this.height/4, this.width, this.height)
+        }
+    }
     class Buff{
         constructor(){
             this.image = document.getElementById("buffImage");
             this.x = 2500;
             this.y = Math.floor(Math.random() * (-800)) + (-400);
-            this.width = 60;
-            this.height = 60;
+            this.width = 75;
+            this.height = 75;
             this.markedForDeletion = false;
         }
         draw(context){
@@ -168,7 +192,7 @@ window.addEventListener("load", function() {
             this.clicks = [];
             this.temp = false;
             this.onlyOnce = false;
-            this.jumpCount = 16;
+            this.jumpCount = 20;
             window.addEventListener("mousedown", e => {
                 this.click = true;
             });
@@ -252,6 +276,7 @@ window.addEventListener("load", function() {
     const input = new InputHandler();
     const player = new Player();
     const hazard = new Hazard();
+    const wind = new Wind();
     const layer1 = new Layer(backgroundLayer1, 0.2);
     const layer2 = new Layer(backgroundLayer2, 0.4);
     const layer3 = new Layer(backgroundLayer3, 0.6);
@@ -286,6 +311,11 @@ window.addEventListener("load", function() {
         }
         if ((player.x + player.width) < hazard.x){
             player.draw(ctx);
+        } else {
+            wind.x = player.x;
+            wind.y = player.y;
+            wind.draw();
+            wind.update(deltaTime);
         }
         player.update(deltaTime, buffs);
         input.update();

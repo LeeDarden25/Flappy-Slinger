@@ -1,4 +1,3 @@
-
 window.addEventListener("load", function() {
     // Establish canvas
     const canvas = document.getElementById("canvas1");
@@ -48,6 +47,16 @@ window.addEventListener("load", function() {
             if (this.tooHigh()){
                 this.y = -1350;
                 this.frameX = 2;
+                hazard.draw();
+                hazard.x -= 10;
+            }
+            // Draw boundary line for the sky
+            if (player.y <= -900){
+                ctx.beginPath();
+                ctx.moveTo(0, -1345);
+                ctx.lineTo(4252, -1345);
+                ctx.strokeStyle = 'red';
+                ctx.stroke();
             }
             // Collision detection for jump buffs
             buffs.forEach(buff => {
@@ -75,20 +84,7 @@ window.addEventListener("load", function() {
         }
     }
 
-    class Background {
-        // Draw background image on canvas
-        constructor() {
-            this.image = document.getElementById("backgroundImage");
-            this.x = 0;
-            this.y = -1500;
-            this.width = 4252;
-            this.height = 2200;      
-        }
-        draw(context){
-            context.drawImage(this.image, 0, 0, 1353, 700, this.x, this.y, this.width, this.height);
-        }
-    }
-    // Assign layered images to variables
+    // Assign layered background images to variables
     const backgroundLayer1 = new Image();
     backgroundLayer1.src = 'layer1.png';
     const backgroundLayer2 = new Image();
@@ -127,6 +123,18 @@ window.addEventListener("load", function() {
         draw(){
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
             ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
+        }
+    }
+    class Hazard{
+        constructor(){
+            this.image = document.getElementById("planeImage");
+            this.width = 400;
+            this.height = 188;
+            this.x = 1700;
+            this.y = -1360;
+        }
+        draw(){
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
         }
     }
     class Buff{
@@ -243,8 +251,7 @@ window.addEventListener("load", function() {
     // declare classes
     const input = new InputHandler();
     const player = new Player();
-    const background = new Background();
-    const buff = new Buff();
+    const hazard = new Hazard();
     const layer1 = new Layer(backgroundLayer1, 0.2);
     const layer2 = new Layer(backgroundLayer2, 0.4);
     const layer3 = new Layer(backgroundLayer3, 0.6);
@@ -267,7 +274,7 @@ window.addEventListener("load", function() {
                 object.update();
                 object.draw();
                 handleBuffs(deltaTime);
-            });   
+            }); 
         } else {
             layer1.draw();
             layer2.draw();
@@ -277,7 +284,9 @@ window.addEventListener("load", function() {
             layer6.draw();
             layer7.draw();
         }
-        player.draw(ctx);
+        if ((player.x + player.width) < hazard.x){
+            player.draw(ctx);
+        }
         player.update(deltaTime, buffs);
         input.update();
         displayStatusText(ctx);

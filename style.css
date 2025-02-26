@@ -9,7 +9,7 @@ body {
     transform: translate(-50%, -50%);
     border: 5px solid rgb(170, 170, 170);
 }
-#birdImage, #backgroundImage, #buffImage {
+#birdImage, #backgroundImage, #buffImage, #planeImage {
     display: none;
 }
 .jump-count{

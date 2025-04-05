@@ -41,7 +41,7 @@ window.addEventListener("load", function() {
             }
             // Boundaries for ground and sky
             if (this.onGround()){
-                this.y = 350;
+                this.y = 600;
                 this.frameX = 2;
             }
             if (this.tooHigh()){
@@ -52,8 +52,8 @@ window.addEventListener("load", function() {
             // Draw boundary line for the sky
             if (player.y <= -900){
                 ctx.beginPath();
-                ctx.moveTo(0, -1345);
-                ctx.lineTo(4252, -1345);
+                ctx.moveTo(0, -1350);
+                ctx.lineTo(4252, -1350);
                 ctx.strokeStyle = 'red';
                 ctx.stroke();
             }
@@ -75,7 +75,7 @@ window.addEventListener("load", function() {
         }
         // detect if player is on the ground
         onGround(){
-            return this.y >= 350;
+            return this.y >= 600;
         }
         // detect if player is too high in the sky
         tooHigh(){
@@ -103,7 +103,7 @@ window.addEventListener("load", function() {
     class Layer {
         constructor(image, speedModifier){
             this.x = 0;
-            this.y = -1500;
+            this.y = -1400;
             this.width = 4252;
             this.height = 2200;
             this.image = image;
@@ -130,7 +130,7 @@ window.addEventListener("load", function() {
             this.width = 400;
             this.height = 188;
             this.x = 1700;
-            this.y = -1360;
+            this.y = -1350;
         }
         draw(){
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
@@ -209,21 +209,21 @@ window.addEventListener("load", function() {
             });
         }
         update(){
-            // Check clicks array to determine if mouseup has been pressed yet
-            if (this.clicks.length == 1 && this.click === false) {
-                // Drag bird down and to the left
-                player.x--;
-                player.y++;
-                // Halt bird animation at frame 2
-                player.frameX = 2;
-                // Stop dragging action at (225,275)
-                if (player.y > 220) {
-                    player.y = 220;
-                    player.x = 280;
-                }
-            } 
+            //Check clicks array to determine if mouseup has been pressed yet
+            // if (this.clicks.length == 1 && this.click === false) {
+            //     // Drag bird down and to the left
+            //     // player.x--;
+            //     // player.y++;
+            //     // Halt bird animation at frame 2
+            //     // player.frameX = 2;
+            //     // Stop dragging action at (225,275)
+            //     // if (player.y > 220) {
+            //     //     player.y = 220;
+            //     //     player.x = 280;
+            //     // }
+            // } 
             // Check if mouseup has been triggered 2nd time yet and player is in boundaries
-            else if (this.clicks.length > 1 && !this.temp) {
+            if (this.clicks.length > 1 && !this.temp) {
                 // Increase airTime and add weight to the player
                 player.x += playerAffectX;
                 player.y -= playerAffectY;
@@ -288,18 +288,67 @@ window.addEventListener("load", function() {
     // Create an array of the layers to be iterated through
     const backgroundObjects = [layer1, layer2, layer3, layer4, layer5, layer6, layer7];
 
+    const startMenu = document.getElementById("start-menu");
+    const startButton = document.getElementById("start-button");
+    let gameStarted = false;
+
+    // Function to draw the static initial state
+    function drawInitialState() {
+        // Clear the canvas to ensure no previous drawings interfere
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw background layers
+        backgroundObjects.forEach((layer) => layer.draw());
+
+        // Draw the player
+        player.draw(ctx);
+
+        // Optionally, display initial status text
+        displayStatusText(ctx);
+    }
+
+    // Ensure all images are loaded before drawing
+    let imagesLoaded = 0;
+    const totalImages = 7; // Number of background layers
+
+    function checkAllImagesLoaded() {
+        imagesLoaded++;
+        if (imagesLoaded === totalImages) {
+            drawInitialState(); // Call the function to draw the initial state
+        }
+    }
+
+    // Attach onload handlers to each background image
+    backgroundLayer1.onload = checkAllImagesLoaded;
+    backgroundLayer2.onload = checkAllImagesLoaded;
+    backgroundLayer3.onload = checkAllImagesLoaded;
+    backgroundLayer4.onload = checkAllImagesLoaded;
+    backgroundLayer5.onload = checkAllImagesLoaded;
+    backgroundLayer6.onload = checkAllImagesLoaded;
+    backgroundLayer7.onload = checkAllImagesLoaded;
+
+
+    startButton.addEventListener("click", () => {
+        startMenu.style.display = "none"; // Hide the start menu
+        gameStarted = true;              // Set gameStarted to true
+        animate(0);                      // Start the game loop
+    });
+
     // set a function to animate in a loop while calculating delta time
     let lastTime = 0;
     function animate(timeStamp) {
+        if (!gameStarted) return; // Stop the game loop if not started
+
         const deltaTime = timeStamp - lastTime;
         lastTime = timeStamp;
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         if (input.clicks.length > 1 && !player.tooHigh() && !player.onGround()) {
             backgroundObjects.forEach(object => {
                 object.update();
                 object.draw();
                 handleBuffs(deltaTime);
-            }); 
+            });
         } else {
             layer1.draw();
             layer2.draw();
@@ -309,7 +358,8 @@ window.addEventListener("load", function() {
             layer6.draw();
             layer7.draw();
         }
-        if ((player.x + player.width) < hazard.x){
+
+        if ((player.x + player.width) < hazard.x) {
             player.draw(ctx);
         } else {
             wind.x = player.x;
@@ -317,9 +367,10 @@ window.addEventListener("load", function() {
             wind.draw();
             wind.update(deltaTime);
         }
+
         player.update(deltaTime, buffs);
         input.update();
         displayStatusText(ctx);
         requestAnimationFrame(animate);
-    } animate(0);
-})
+    }animate(0);
+});
